@@ -161,21 +161,22 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
     audio.stopAllBackgroundMusic();
     audio.playPopSound();
 
-    const customVoiceUrl = `/api/proxy-audio?id=1Qw1Z2Ps8C5eQDWxrBR7ZU9WCbhDKc6Xs&_cb=${Date.now()}`;
+    const customVoiceUrl = '/music.mp3';
     const speech = new Audio(customVoiceUrl);
+    speech.crossOrigin = 'anonymous';
+    speech.preload = 'auto';
     activeAudioRef.current = speech;
     speech.volume = 0.95;
 
     speech
       .play()
       .then(() => {
-        // Safe timeout cleanup
         activeTimeoutRef.current = setTimeout(() => {
           activeAudioRef.current = null;
         }, 7600);
       })
       .catch((err) => {
-        console.log("Playing primary Google Drive speech failed, trying cached fallback:", err);
+        console.error("Playing local music.mp3 failed, falling back to external Shinchan audio:", err);
         const fallbackSpeech = new Audio("https://www.myinstants.com/media/sounds/sinchan_1.mp3");
         activeAudioRef.current = fallbackSpeech;
         fallbackSpeech.volume = 0.90;
@@ -213,7 +214,7 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
       antialias: true,
       alpha: true,
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
@@ -236,7 +237,7 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
     // Bottom Layer: Cylinder (radiusTop=3, radiusBottom=3, height=1.5, segments=32)
     // Metallic Minty Matcha Green
     const bottomCake = new THREE.Mesh(
-      new THREE.CylinderGeometry(3, 3, 1.5, 32),
+      new THREE.CylinderGeometry(3, 3, 1.5, 16),
       new THREE.MeshStandardMaterial({
         color: 0x2ecc71,
         roughness: 0.3,
@@ -248,7 +249,7 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
     // Middle Layer: Cylinder (radiusTop=2.2, radiusBottom=2.2, height=1.3, segments=32)
     // position.y = 1.4, Forest Cream Green
     const middleCake = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.2, 2.2, 1.3, 32),
+      new THREE.CylinderGeometry(2.2, 2.2, 1.3, 16),
       new THREE.MeshStandardMaterial({
         color: 0x27ae60,
         roughness: 0.35,
@@ -261,7 +262,7 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
     // Top Layer: Cylinder (radiusTop=1.5, radiusBottom=1.5, height=1, segments=32)
     // position.y = 2.6, Emerald Lime Green
     const topCake = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.5, 1.5, 1, 32),
+      new THREE.CylinderGeometry(1.5, 1.5, 1, 16),
       new THREE.MeshStandardMaterial({
         color: 0x58d68d,
         roughness: 0.25,
@@ -273,13 +274,13 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
 
     // Add Sparkles / Sprinkles to enhance top of the Three.js Cake
     const sprinkleColors = [0xffffff, 0xff007f, 0xffea00, 0x00e5ff, 0xa29bfe];
-    for (let i = 0; i < 24; i++) {
-      const angle = (i / 24) * Math.PI * 2;
+    for (let i = 0; i < 16; i++) {
+      const angle = (i / 16) * Math.PI * 2;
       const radius = 1.2 * Math.sqrt(Math.random()); // distribute within upper layer
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
       const sprinkle = new THREE.Mesh(
-        new THREE.SphereGeometry(0.07, 8, 8),
+        new THREE.SphereGeometry(0.07, 6, 6),
         new THREE.MeshStandardMaterial({
           color: sprinkleColors[i % sprinkleColors.length],
           roughness: 0.1,
@@ -291,7 +292,6 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
 
     // 6. Candles & Flickering Flames (exactly 5 as requested by user's template)
     const flamesArray: THREE.Mesh[] = [];
-    const candleLightsArray: THREE.PointLight[] = [];
     const glowAurasArray: THREE.Mesh[] = [];
 
     for (let i = 0; i < 5; i++) {
@@ -301,7 +301,7 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
 
       // Candle mesh: Cylinder (0.08, 0.08, 0.8, 16) with standard white beeswax texture
       const candle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.08, 0.08, 0.8, 16),
+        new THREE.CylinderGeometry(0.08, 0.08, 0.8, 8),
         new THREE.MeshStandardMaterial({
           color: 0xffffff,
           roughness: 0.3,
@@ -312,7 +312,7 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
 
       // Flame mesh: Cone (0.08, 0.2, 12, components) with custom emissive golden glows
       const flame = new THREE.Mesh(
-        new THREE.ConeGeometry(0.08, 0.2, 12),
+        new THREE.ConeGeometry(0.08, 0.2, 6),
         new THREE.MeshPhongMaterial({
           color: 0xffdd55,
           emissive: 0xff7700,
@@ -324,17 +324,12 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
       flamesArray.push(flame);
 
       // Warm local PointLight right at the flame center to cast glowing yellow-orange rays on the cake!
-      const pointLight = new THREE.PointLight(0xff9900, 2.5, 4.5, 1.2);
-      pointLight.position.set(x, 3.95, z);
-      cakeGroup.add(pointLight);
-      candleLightsArray.push(pointLight);
-
-      // Add Semi-transparent additive-blended Glow Halo around the candle flame for a physical light bloom effect
-      const glowGeo = new THREE.SphereGeometry(0.24, 16, 16);
+      // Add a lightweight emissive flame effect instead of many dynamic point lights
+      const glowGeo = new THREE.SphereGeometry(0.24, 8, 8);
       const glowMat = new THREE.MeshBasicMaterial({
         color: 0xff5500,
         transparent: true,
-        opacity: 0.42,
+        opacity: 0.36,
         blending: THREE.AdditiveBlending,
       });
       const glowMesh = new THREE.Mesh(glowGeo, glowMat);
@@ -378,22 +373,16 @@ export default function BirthdayCakeScene({ onBack, isMuted, onToggleMute, onRes
 
       // Flicker lit candle flames to represent real blowing fire wind!
       flamesArray.forEach((flame, index) => {
-        const flicker = 1.0 + Math.sin(elapsedTime * 24 + index * 9) * 0.15;
-        flame.scale.set(flicker, flicker + Math.cos(elapsedTime * 18 + index * 7) * 0.1, flicker);
+        const flicker = 1.0 + Math.sin(elapsedTime * 20 + index * 9) * 0.12;
+        flame.scale.set(flicker, flicker + Math.cos(elapsedTime * 16 + index * 7) * 0.08, flicker);
 
-        // Flicker corresponding PointLight intensity dynamically as well!
-        const light = candleLightsArray[index];
-        if (light) {
-          light.intensity = 2.0 + Math.sin(elapsedTime * 28 + index * 5) * 0.6;
-        }
-
-        // Dynamically rotate and pulsate glow halo size/opacity for a realistic fire emission bloom effect
+        // Dynamically pulsate glow halo size/opacity for a realistic fire emission bloom effect
         const glow = glowAurasArray[index];
         if (glow) {
-          const pulsate = 1.0 + Math.sin(elapsedTime * 16 + index * 8) * 0.14;
+          const pulsate = 1.0 + Math.sin(elapsedTime * 12 + index * 6) * 0.12;
           glow.scale.set(pulsate, pulsate, pulsate);
           if (glow.material && !Array.isArray(glow.material)) {
-            (glow.material as THREE.MeshBasicMaterial).opacity = 0.32 + Math.sin(elapsedTime * 24 + index * 6) * 0.1;
+            (glow.material as THREE.MeshBasicMaterial).opacity = 0.34 + Math.sin(elapsedTime * 18 + index * 6) * 0.08;
           }
         }
       });

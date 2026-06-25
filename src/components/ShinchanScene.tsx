@@ -133,9 +133,9 @@ export default function ShinchanScene({ onBack, isMuted, onToggleMute, onNextTri
     const canvas = confettiCanvasRef.current;
     if (!canvas) return;
 
-    const colors = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#ff6b81', '#70a1ff', '#eccc68', '#f368e0', '#be2edd'];
+    const colors = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#ff6b81', '#f368e0'];
     const shapes: ('circle' | 'rect' | 'triangle')[] = ['circle', 'rect', 'triangle'];
-    const count = 160;
+    const count = 52;
 
     // Left Bottom Cannon
     for (let i = 0; i < count / 2; i++) {
@@ -213,8 +213,8 @@ export default function ShinchanScene({ onBack, isMuted, onToggleMute, onNextTri
     audio.playExplosionSound();
     
     // Create a circular burst with real sparks
-    const numSparks = 60 + Math.floor(Math.random() * 30);
-    const accentColors = [baseColor, '#ffffff', '#ffd700', '#ff69b4', '#00ffff', '#ff8c00', '#32cd32'];
+    const numSparks = 24 + Math.floor(Math.random() * 18);
+    const accentColors = [baseColor, '#ffffff', '#ffd700', '#ff69b4', '#00ffff'];
     for (let i = 0; i < numSparks; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = Math.random() * 5.2 + 1.2;
@@ -305,29 +305,29 @@ export default function ShinchanScene({ onBack, isMuted, onToggleMute, onNextTri
       triggerConfettiExplosion();
       audio.playExplosionSound();
 
-      // Launch 5 spectacular rockets staggered at start
+      // Launch a few subtle rockets at start
       const w = window.innerWidth;
       const h = window.innerHeight;
-      launchFirework(w * 0.18, h * (0.15 + Math.random() * 0.15));
-      launchFirework(w * 0.38, h * (0.10 + Math.random() * 0.12));
-      launchFirework(w * 0.58, h * (0.13 + Math.random() * 0.15));
-      launchFirework(w * 0.78, h * (0.17 + Math.random() * 0.12));
+      launchFirework(w * 0.25, h * (0.15 + Math.random() * 0.12));
+      launchFirework(w * 0.65, h * (0.12 + Math.random() * 0.14));
     }, 450);
 
-    // Continuously spawn random beautiful sky rockets!
+    // Continuously spawn random beautiful sky rockets with a lighter cadence
     const fireworkInterval = setInterval(() => {
-      const x = Math.random() * (window.innerWidth - 160) + 80;
-      const targetY = Math.random() * (window.innerHeight * 0.40) + window.innerHeight * 0.08;
-      launchFirework(x, targetY);
+      if (fireworkRockets.current.length < 2) {
+        const x = Math.random() * (window.innerWidth - 160) + 80;
+        const targetY = Math.random() * (window.innerHeight * 0.35) + window.innerHeight * 0.08;
+        launchFirework(x, targetY);
+      }
 
-      if (Math.random() < 0.40) {
+      if (Math.random() < 0.25 && fireworkRockets.current.length < 3) {
         setTimeout(() => {
           const x2 = Math.random() * (window.innerWidth - 160) + 80;
-          const targetY2 = Math.random() * (window.innerHeight * 0.40) + window.innerHeight * 0.08;
+          const targetY2 = Math.random() * (window.innerHeight * 0.35) + window.innerHeight * 0.08;
           launchFirework(x2, targetY2);
-        }, 600);
+        }, 900);
       }
-    }, 2500);
+    }, 3600);
 
     let frameId: number;
     const renderConfetti = () => {

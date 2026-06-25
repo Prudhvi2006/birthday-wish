@@ -31,7 +31,7 @@ export default function ParticleBackground({ mode }: ParticleBackgroundProps) {
 
     let animationFrameId: number;
     let particles: Particle[] = [];
-    const maxParticles = mode === 'hearts' ? 30 : mode === 'both' ? 50 : 60;
+    const maxParticles = mode === 'hearts' ? 18 : mode === 'both' ? 28 : 32;
 
     // Fluid container size observer
     const resizeObserver = new ResizeObserver((entries) => {

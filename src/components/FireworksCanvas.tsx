@@ -91,10 +91,10 @@ export default function FireworksCanvas() {
     const explode = (x: number, y: number, color: string) => {
       audio.playExplosionSound();
       
-      const particleCount = Math.floor(Math.random() * 40 + 60);
+      const particleCount = Math.floor(Math.random() * 24 + 24);
       for (let i = 0; i < particleCount; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 6 + 1.5;
+        const speed = Math.random() * 4 + 1.2;
         sparks.push({
           x,
           y,
@@ -110,11 +110,11 @@ export default function FireworksCanvas() {
       }
 
       // Small secondary mini crackler stars
-      if (Math.random() > 0.4) {
+      if (Math.random() > 0.75) {
         setTimeout(() => {
-          for (let i = 0; i < 15; i++) {
+          for (let i = 0; i < 10; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 4 + 0.5;
+            const speed = Math.random() * 3 + 0.4;
             sparks.push({
               x: x + (Math.random() - 0.5) * 20,
               y: y + (Math.random() - 0.5) * 20,
@@ -134,14 +134,14 @@ export default function FireworksCanvas() {
 
     // Auto launcher timer
     let autoLaunchInterval = setInterval(() => {
-      if (rockets.length < 5) {
+      if (rockets.length < 3) {
         const startX = Math.random() * canvas.width;
         const startY = canvas.height;
         const targetX = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
         const targetY = Math.random() * canvas.height * 0.4 + canvas.height * 0.15;
         launchRocket(startX, startY, targetX, targetY);
       }
-    }, 900);
+    }, 1800);
 
     // Click handler to launch manual firework
     const handleCanvasClick = (e: MouseEvent) => {

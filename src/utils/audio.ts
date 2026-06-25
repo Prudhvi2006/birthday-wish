@@ -21,22 +21,43 @@ class AudioManager {
   public isMuted: boolean = false;
   private onMuteChangeCallbacks: ((muted: boolean) => void)[] = [];
 
+  private unlocking = false;
+
   constructor() {
-    // Lazy initialisation and automatic context unlocking on first user click, touch or keydown
+    // Lazy initialisation and automatic context unlocking on first user interaction.
     if (typeof window !== 'undefined') {
       const unlock = () => {
         this.init();
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
         if (this.ctx && this.ctx.state === 'running') {
-          // Once Web Audio is successfully initialized and running, clean up listeners
           window.removeEventListener('click', unlock, true);
           window.removeEventListener('touchstart', unlock, true);
+          window.removeEventListener('pointerdown', unlock, true);
           window.removeEventListener('keydown', unlock, true);
         }
       };
       window.addEventListener('click', unlock, { capture: true, passive: true });
       window.addEventListener('touchstart', unlock, { capture: true, passive: true });
+      window.addEventListener('pointerdown', unlock, { capture: true, passive: true });
       window.addEventListener('keydown', unlock, { capture: true, passive: true });
     }
+  }
+
+  private async ensureContextRunning(): Promise<AudioContext | null> {
+    this.init();
+    if (!this.ctx) return null;
+    if (this.ctx.state === 'suspended' && !this.unlocking) {
+      this.unlocking = true;
+      try {
+        await this.ctx.resume();
+      } catch (e) {
+        console.warn('AudioContext resume failed', e);
+      }
+      this.unlocking = false;
+    }
+    return this.ctx.state === 'running' ? this.ctx : null;
   }
 
   private init() {
@@ -84,77 +105,77 @@ class AudioManager {
   /**
    * Short, sweet keyboard pluck note
    */
-  public playKeypadSound(index: number = 0) {
-    this.init();
-    if (!this.ctx || this.isMuted) return;
+  public async playKeypadSound(index: number = 0) {
+    const ctx = await this.ensureContextRunning();
+    if (!ctx || this.isMuted) return;
 
     // Map keys to an elegant pentatonic scale so keys sound musical
     const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00];
     const freq = notes[index % notes.length] || 440;
 
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
 
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
     
     // Quick pluck envelope
-    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
 
     osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(ctx.destination);
 
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.16);
+    osc.stop(ctx.currentTime + 0.16);
   }
 
   /**
    * Wrong passcode buzzer
    */
-  public playWrongSound() {
-    this.init();
-    if (!this.ctx || this.isMuted) return;
+  public async playWrongSound() {
+    const ctx = await this.ensureContextRunning();
+    if (!ctx || this.isMuted) return;
 
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
 
     osc1.type = 'sawtooth';
     osc2.type = 'sawtooth';
-    osc1.frequency.setValueAtTime(130, this.ctx.currentTime);
-    osc2.frequency.setValueAtTime(133, this.ctx.currentTime); // Detuned for fat buzzer sound
+    osc1.frequency.setValueAtTime(130, ctx.currentTime);
+    osc2.frequency.setValueAtTime(133, ctx.currentTime); // Detuned for fat buzzer sound
 
-    gain.gain.setValueAtTime(0, this.ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + 0.02);
-    gain.gain.setValueAtTime(0.2, this.ctx.currentTime + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
 
     osc1.connect(gain);
     osc2.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(ctx.destination);
 
     osc1.start();
     osc2.start();
     
-    osc1.stop(this.ctx.currentTime + 0.26);
-    osc2.stop(this.ctx.currentTime + 0.26);
+    osc1.stop(ctx.currentTime + 0.26);
+    osc2.stop(ctx.currentTime + 0.26);
   }
 
   /**
    * Magical success chime sweep
    */
-  public playSuccessSound() {
-    this.init();
-    if (!this.ctx || this.isMuted) return;
+  public async playSuccessSound() {
+    const ctx = await this.ensureContextRunning();
+    if (!ctx || this.isMuted) return;
 
-    const now = this.ctx.currentTime;
+    const now = ctx.currentTime;
     const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00];
 
     notes.forEach((freq, idx) => {
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + idx * 0.07);
@@ -164,13 +185,13 @@ class AudioManager {
       gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.4);
 
       // Lowpass filter to make it soft and twinkly
-      const filter = this.ctx.createBiquadFilter();
+      const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(3000, this.ctx.currentTime);
+      filter.frequency.setValueAtTime(3000, ctx.currentTime);
 
       osc.connect(gain);
       gain.connect(filter);
-      filter.connect(this.ctx.destination);
+      filter.connect(ctx.destination);
 
       osc.start(now + idx * 0.07);
       osc.stop(now + idx * 0.07 + 0.45);
@@ -180,9 +201,9 @@ class AudioManager {
   /**
    * Synthesize a firework bloom explosion with a rich, magnificent crackling/exploding firecracker sound
    */
-  public playExplosionSound() {
-    this.init();
-    if (this.isMuted || !this.ctx) return;
+  public async playExplosionSound() {
+    const ctx = await this.ensureContextRunning();
+    if (this.isMuted || !ctx) return;
 
     // Rate limit: Max 1 explosion sound every 80ms to avoid UI stutter and audio saturation
     const nowMs = Date.now();
@@ -192,32 +213,32 @@ class AudioManager {
     this.lastExplosionTime = nowMs;
 
     try {
-      const now = this.ctx.currentTime;
-      const sampleRate = this.ctx.sampleRate || 44100;
+      const now = ctx.currentTime;
+      const sampleRate = ctx.sampleRate || 44100;
 
       // 1. Sudden sharp high-frequency "crack" using cached noise
-      const crackSource = this.ctx.createBufferSource();
+      const crackSource = ctx.createBufferSource();
       if (this.noiseBuffer) {
         crackSource.buffer = this.noiseBuffer;
       } else {
         // Fallback buffer if not fully warmed up
-        const fallback = this.ctx.createBuffer(1, Math.floor(sampleRate * 0.15), sampleRate);
+        const fallback = ctx.createBuffer(1, Math.floor(sampleRate * 0.15), sampleRate);
         const data = fallback.getChannelData(0);
         for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
         crackSource.buffer = fallback;
       }
 
-      const crackFilter = this.ctx.createBiquadFilter();
+      const crackFilter = ctx.createBiquadFilter();
       crackFilter.type = 'highpass';
       crackFilter.frequency.setValueAtTime(1500, now);
 
-      const crackGain = this.ctx.createGain();
+      const crackGain = ctx.createGain();
       crackGain.gain.setValueAtTime(0.3, now);
       crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
       crackSource.connect(crackFilter);
       crackFilter.connect(crackGain);
-      crackGain.connect(this.ctx.destination);
+      crackGain.connect(ctx.destination);
 
       // Start at random offset inside cached buffer for natural sensory diversity
       const offset = this.noiseBuffer ? Math.random() * 0.15 : 0;
@@ -225,8 +246,8 @@ class AudioManager {
       crackSource.stop(now + 0.15);
 
       // 2. Heavy bass deep boom/thump swept oscillator
-      const boomOsc = this.ctx.createOscillator();
-      const boomGain = this.ctx.createGain();
+      const boomOsc = ctx.createOscillator();
+      const boomGain = ctx.createGain();
       boomOsc.type = 'triangle';
       
       boomOsc.frequency.setValueAtTime(150, now);
@@ -235,32 +256,32 @@ class AudioManager {
       boomGain.gain.setValueAtTime(0.45, now);
       boomGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
 
-      const boomFilter = this.ctx.createBiquadFilter();
+      const boomFilter = ctx.createBiquadFilter();
       boomFilter.type = 'lowpass';
       boomFilter.frequency.setValueAtTime(200, now);
 
       boomOsc.connect(boomFilter);
       boomFilter.connect(boomGain);
-      boomGain.connect(this.ctx.destination);
+      boomGain.connect(ctx.destination);
 
       boomOsc.start(now);
       boomOsc.stop(now + 0.35);
 
       // 3. Simple singular crackle tail (cheap secondary spark simulation)
-      const crackleSource = this.ctx.createBufferSource();
-      crackleSource.buffer = this.noiseBuffer || crackSource.buffer;
+      const crackleSource = ctx.createBufferSource();
+      crackleSource.buffer = this.noiseBuffer || crackleSource.buffer;
 
-      const crackleFilter = this.ctx.createBiquadFilter();
+      const crackleFilter = ctx.createBiquadFilter();
       crackleFilter.type = 'bandpass';
       crackleFilter.frequency.setValueAtTime(2200, now + 0.08);
 
-      const crackleGain = this.ctx.createGain();
+      const crackleGain = ctx.createGain();
       crackleGain.gain.setValueAtTime(0.08, now + 0.08);
       crackleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
 
       crackleSource.connect(crackleFilter);
       crackleFilter.connect(crackleGain);
-      crackleGain.connect(this.ctx.destination);
+      crackleGain.connect(ctx.destination);
 
       crackleSource.start(now + 0.08, offset + 0.1);
       crackleSource.stop(now + 0.14);
@@ -273,9 +294,9 @@ class AudioManager {
   /**
    * Play synthesized high-fidelity balloon pop/crack sound
    */
-  public playPopSound() {
-    this.init();
-    if (this.isMuted || !this.ctx) return;
+  public async playPopSound() {
+    const ctx = await this.ensureContextRunning();
+    if (this.isMuted || !ctx) return;
 
     // Throttle pops so sequential balloons popping in a loop don't stack up or lag
     const nowMs = Date.now();
@@ -285,39 +306,39 @@ class AudioManager {
     this.lastPopTime = nowMs;
 
     try {
-      const now = this.ctx.currentTime;
-      const sampleRate = this.ctx.sampleRate || 44100;
+      const now = ctx.currentTime;
+      const sampleRate = ctx.sampleRate || 44100;
 
       // 1. Crisp pop snap using cached noise buffer
-      const noiseSource = this.ctx.createBufferSource();
+      const noiseSource = ctx.createBufferSource();
       if (this.noiseBuffer) {
         noiseSource.buffer = this.noiseBuffer;
       } else {
-        const fallback = this.ctx.createBuffer(1, Math.floor(sampleRate * 0.06), sampleRate);
+        const fallback = ctx.createBuffer(1, Math.floor(sampleRate * 0.06), sampleRate);
         const data = fallback.getChannelData(0);
         for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
         noiseSource.buffer = fallback;
       }
 
-      const filter = this.ctx.createBiquadFilter();
+      const filter = ctx.createBiquadFilter();
       filter.type = 'highpass';
       filter.frequency.setValueAtTime(1200, now);
 
-      const noiseGain = this.ctx.createGain();
+      const noiseGain = ctx.createGain();
       noiseGain.gain.setValueAtTime(0.25, now);
       noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
 
       noiseSource.connect(filter);
       filter.connect(noiseGain);
-      noiseGain.connect(this.ctx.destination);
+      noiseGain.connect(ctx.destination);
 
       const offset = this.noiseBuffer ? Math.random() * 0.2 : 0;
       noiseSource.start(now, offset);
       noiseSource.stop(now + 0.06);
 
       // 2. Low-mid pop body sweep
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(420, now);
@@ -327,7 +348,7 @@ class AudioManager {
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(ctx.destination);
 
       osc.start(now);
       osc.stop(now + 0.08);
@@ -339,9 +360,9 @@ class AudioManager {
   /**
    * Loop emotional ambient music: soft piano chords
    */
-  public playEmotionalMusic() {
-    this.init();
-    if (this.isMuted || !this.ctx) return;
+  public async playEmotionalMusic() {
+    const ctx = await this.ensureContextRunning();
+    if (this.isMuted || !ctx) return;
     this.stopAllBackgroundMusic();
 
     let step = 0;
@@ -358,18 +379,17 @@ class AudioManager {
     ];
 
     const playChord = () => {
-      if (!this.ctx || this.isMuted) return;
-      const now = this.ctx.currentTime;
+      if (this.isMuted) return;
+      const now = ctx.currentTime;
       const chord = chordProgressions[step % chordProgressions.length];
       
-      const filter = this.ctx.createBiquadFilter();
+      const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.setValueAtTime(600, now);
 
       chord.forEach((freq, i) => {
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
         // Soft sine-triangle hybrid
         osc.type = i % 2 === 0 ? 'sine' : 'triangle';
@@ -391,7 +411,7 @@ class AudioManager {
         this.emotionalMusicNodes.push(osc as any, gain as any);
       });
 
-      filter.connect(this.ctx.destination);
+      filter.connect(ctx.destination);
       this.emotionalMusicNodes.push(filter as any);
 
       step++;
@@ -404,9 +424,9 @@ class AudioManager {
   /**
    * Loops a sweet chime glockenspiel version of "Happy Birthday" on Page 3
    */
-  public playBirthdayMusic() {
-    this.init();
-    if (this.isMuted || !this.ctx) return;
+  public async playBirthdayMusic() {
+    const ctx = await this.ensureContextRunning();
+    if (this.isMuted || !ctx) return;
     this.stopAllBackgroundMusic();
 
     // Notes of Happy Birthday to You:
@@ -446,8 +466,8 @@ class AudioManager {
     ];
 
     const playMelodyOnce = () => {
-      if (!this.ctx || this.isMuted) return;
-      const now = this.ctx.currentTime;
+      if (this.isMuted) return;
+      const now = ctx.currentTime;
 
       // Add a simple underlying harmony (gentle, warm bass notes)
       const harmony = [
@@ -462,10 +482,9 @@ class AudioManager {
       ];
 
       harmony.forEach((h) => {
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        const filter = this.ctx.createBiquadFilter();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
 
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(h.f, now + h.t);
@@ -479,7 +498,7 @@ class AudioManager {
 
         osc.connect(gain);
         gain.connect(filter);
-        filter.connect(this.ctx.destination);
+        filter.connect(ctx.destination);
 
         osc.start(now + h.t);
         osc.stop(now + h.t + 2.6);
@@ -489,10 +508,9 @@ class AudioManager {
 
       // Play chimey Glockenspiel melody
       hbdMelody.forEach((m) => {
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const subOsc = this.ctx.createOscillator(); // Sub-sine for extra roundness
-        const gain = this.ctx.createGain();
+        const osc = ctx.createOscillator();
+        const subOsc = ctx.createOscillator(); // Sub-sine for extra roundness
+        const gain = ctx.createGain();
 
         osc.type = 'sine';
         osc.frequency.setValueAtTime(m.f, now + m.t);
@@ -506,14 +524,14 @@ class AudioManager {
         gain.gain.exponentialRampToValueAtTime(0.0001, now + m.t + m.d * 1.5);
 
         // Highpass to sparkle
-        const hp = this.ctx.createBiquadFilter();
+        const hp = ctx.createBiquadFilter();
         hp.type = 'highpass';
         hp.frequency.setValueAtTime(200, now + m.t);
 
         osc.connect(gain);
         subOsc.connect(gain);
         gain.connect(hp);
-        hp.connect(this.ctx.destination);
+        hp.connect(ctx.destination);
 
         osc.start(now + m.t);
         subOsc.start(now + m.t);
@@ -532,20 +550,19 @@ class AudioManager {
   /**
    * Loops a soft, magical 'shimmer' or 'chime' sound effect in the background
    */
-  public playMagicalShimmerMusic() {
-    this.init();
-    if (this.isMuted || !this.ctx) return;
+  public async playMagicalShimmerMusic() {
+    const ctx = await this.ensureContextRunning();
+    if (this.isMuted || !ctx) return;
     this.stopAllBackgroundMusic();
 
     const playShimmer = () => {
-      if (!this.ctx || this.isMuted) return;
-      const now = this.ctx.currentTime;
+      if (this.isMuted) return;
+      const now = ctx.currentTime;
       const notes = [1046.50, 1174.66, 1318.51, 1567.98, 1760.00, 2093.00, 2349.32, 2637.02, 3135.96];
 
       for (let i = 0; i < 12; i++) {
-        if (!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
         const baseFreq = notes[Math.floor(Math.random() * notes.length)];
         osc.frequency.setValueAtTime(baseFreq + (Math.random() - 0.5) * 15, now + i * 0.28);
@@ -556,13 +573,13 @@ class AudioManager {
         gain.gain.linearRampToValueAtTime(0.012, triggerTime + 0.12);
         gain.gain.exponentialRampToValueAtTime(0.0001, triggerTime + 1.2);
 
-        const filter = this.ctx.createBiquadFilter();
+        const filter = ctx.createBiquadFilter();
         filter.type = 'highpass';
         filter.frequency.setValueAtTime(1100, triggerTime);
 
         osc.connect(gain);
         gain.connect(filter);
-        filter.connect(this.ctx.destination);
+        filter.connect(ctx.destination);
 
         osc.start(triggerTime);
         osc.stop(triggerTime + 1.5);

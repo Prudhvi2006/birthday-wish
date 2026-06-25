@@ -45,7 +45,7 @@ export default function ThreeCake({ candles, onBlowCandle }: ThreeCakeProps) {
 
     // Create Renderer with antialiasing and alpha (transparent bg)
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
@@ -102,7 +102,7 @@ export default function ThreeCake({ candles, onBlowCandle }: ThreeCakeProps) {
 
     // 2. Middle Layer (Creamy forest - 0x27ae60)
     const middleCake = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.2, 2.2, 1.3, 32),
+      new THREE.CylinderGeometry(2.2, 2.2, 1.3, 16),
       new THREE.MeshStandardMaterial({
         color: 0x27ae60,
         roughness: 0.4,
@@ -129,7 +129,7 @@ export default function ThreeCake({ candles, onBlowCandle }: ThreeCakeProps) {
 
     // 3. Top Layer (Dhanushka's Special Emerald Whip - 0x58d68d)
     const topCake = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.5, 1.5, 1.0, 32),
+      new THREE.CylinderGeometry(1.5, 1.5, 1.0, 16),
       new THREE.MeshStandardMaterial({
         color: 0x58d68d,
         roughness: 0.3,
@@ -164,7 +164,7 @@ export default function ThreeCake({ candles, onBlowCandle }: ThreeCakeProps) {
 
     // 4. Shiny Cake Stand Base plate under the cake
     const standPlate = new THREE.Mesh(
-      new THREE.CylinderGeometry(3.3, 3.3, 0.15, 32),
+      new THREE.CylinderGeometry(3.3, 3.3, 0.15, 16),
       new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.2 })
     );
     standPlate.position.y = 0.05;
@@ -251,7 +251,7 @@ export default function ThreeCake({ candles, onBlowCandle }: ThreeCakeProps) {
       requestID = requestAnimationFrame(animate);
 
       // Constantly rotate the beautiful birthday cake group!
-      cakeGroup.rotation.y += 0.009;
+      cakeGroup.rotation.y += 0.004;
 
       const time = clock.getElapsedTime();
 
