@@ -1,0 +1,6 @@
+{
+  "name": "Sister Birthday Celebration",
+  "description": "A premium, emotional, and magical birthday celebration website for a lifetime best friend and sister.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
