@@ -25,7 +25,7 @@ const MEMORIES: MemoryCard[] = [
     id: 1,
     title: "1. The First Spark ⚡",
     caption: "",
-    image: "/pic1.jpeg",
+    image: "/images/pic1.jpeg",
     emoji: "🌸",
     accent: "from-pink-400 to-rose-400",
     stickerText: "OUR BEGINNING"
@@ -34,7 +34,7 @@ const MEMORIES: MemoryCard[] = [
     id: 2,
     title: "2. Late Night Whispers 🌙",
     caption: "",
-    image: "/pic2.jpeg",
+    image: "/images/pic2.jpeg",
     emoji: "☕",
     accent: "from-indigo-400 to-purple-400",
     stickerText: "COZY TALKS"
@@ -43,7 +43,7 @@ const MEMORIES: MemoryCard[] = [
     id: 3,
     title: "3. Little Adventures Together 🎒",
     caption: "",
-    image: "/pic3.jpeg",
+    image: "/images/pic3.jpeg",
     emoji: "🌧️",
     accent: "from-teal-400 to-emerald-400",
     stickerText: "SWEET ROAD"
@@ -52,7 +52,7 @@ const MEMORIES: MemoryCard[] = [
     id: 4,
     title: "4. Your Adorable Smile ✨",
     caption: "",
-    image: "/pic4.jpeg",
+    image: "/images/pic4.jpeg",
     emoji: "💖",
     accent: "from-amber-300 to-rose-400",
     stickerText: "YOUR LAUGHTER"
@@ -61,7 +61,7 @@ const MEMORIES: MemoryCard[] = [
     id: 5,
     title: "5. The Endless Promise 🤝",
     caption: "",
-    image: "/pic5.jpeg",
+    image: "/images/pic5.jpeg",
     emoji: "🌟",
     accent: "from-rose-400 to-amber-300",
     stickerText: "FOREVER & ALWAYS"
