@@ -878,7 +878,7 @@ export default function ShinchanScene({ onBack, isMuted, onToggleMute, onNextTri
 
           <div className="space-y-4 text-xs md:text-sm text-stone-800 leading-relaxed font-sans mt-2 text-center">
             <p className="leading-relaxed font-black text-rose-700 italic">
-              "Thank you for being my best friend, my partner-in-crime, my biggest supporter, and one of the most precious people in my life. 🫂💖"
+              "Thank you for being my best sister and my best friend, my biggest supporter, and my forever safe place. 🫂💖 I hope we never break our beautiful bond and always stay by each other's side. 🥹❤️"
             </p>
             
             <p className="text-stone-700 font-medium leading-relaxed">
